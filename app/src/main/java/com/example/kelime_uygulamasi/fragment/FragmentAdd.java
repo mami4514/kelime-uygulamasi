@@ -5,6 +5,7 @@ import android.os.Bundle;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.view.LayoutInflater;
@@ -15,8 +16,7 @@ import android.widget.Toast;
 import com.example.kelime_uygulamasi.R;
 import com.example.kelime_uygulamasi.databinding.FragmentAddBinding;
 import com.example.kelime_uygulamasi.models.Deneme;
-
-import com.example.kelime_uygulamasi.models.WordList;
+import com.example.kelime_uygulamasi.repository.WordList;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -31,8 +31,7 @@ public class FragmentAdd extends Fragment {
 
     private FragmentAddBinding binding;
     private FirebaseFirestore mFirestore=FirebaseFirestore.getInstance();
-    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
-    private String kelime,kelimeAnlam;
+    private FirebaseAuth mAuth;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -43,11 +42,12 @@ public class FragmentAdd extends Fragment {
     }
 
     private void setupOnBackPressed(){
-        getActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true)  {
+        getActivity().getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                Fragment currentFragment = getParentFragmentManager().findFragmentById(R.id.cl);
-                FragmentTransaction transaction = getParentFragmentManager().beginTransaction();
+                FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+                Fragment currentFragment = fragmentManager.findFragmentById(R.id.cl);
+                FragmentTransaction transaction = fragmentManager.beginTransaction();
                 transaction.remove(currentFragment).commit();
             }
         });
@@ -55,6 +55,7 @@ public class FragmentAdd extends Fragment {
 
     private void addWord(){
         ArrayList<Deneme> wordListGlobal = new ArrayList<>();
+        mAuth = FirebaseAuth.getInstance();
 
         binding.buttonWordAdd.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -77,7 +78,8 @@ public class FragmentAdd extends Fragment {
                             }
                             wordListGlobal.clear();
                             wordList1.add(new Deneme(binding.editTextWord.getText().toString(),binding.editTextWordMean.getText().toString()));
-
+                            binding.editTextWord.setText("");
+                            binding.editTextWordMean.setText("");
                             wordListGlobal.addAll(wordList1);
                             mFirestore.collection("User").document(mAuth.getUid()).set(new WordList(wordListGlobal)).addOnCompleteListener(new OnCompleteListener<Void>() {
                                 @Override
